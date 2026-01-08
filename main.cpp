@@ -62,17 +62,23 @@ struct FetchData
 };
 
 
-int main(int argc, char* argv[])
+void render(const FetchData& fetch_data)
 {
 	constexpr std::string_view esc = "\033";
+	for (const std::string& line : fetch_data.distro_logo) {
+		std::cout << esc << line << esc << "[0m" << std::endl;
+	}
+}
+
+
+int main(int argc, char* argv[])
+{
 	SourceDir::setSourceDir(argv[0]);
 	FetchData fetch_data;
 	if (argc != 1) fetch_data.distro_name = argv[1];
 	else fetch_data.initDistroName();
 	fetch_data.initDistroLogo();
-	for (const std::string& line : fetch_data.distro_logo) {
-		std::cout << esc << line << esc << "[0m" << std::endl;
-	}
+	render(fetch_data);
 	return 0;
 }
 
