@@ -20,7 +20,7 @@ class SourceDir
 			sourceDir() = std::filesystem::weakly_canonical(std::filesystem::absolute(binary_file).parent_path());
 		}
 		
-		static std::filesystem::path getSourceDir()
+		const static std::filesystem::path& getSourceDir()
 		{
 			return sourceDir();
 		}
@@ -47,7 +47,7 @@ struct FetchData
 
 	void initDistroLogo()
 	{
-		const std::filesystem::path source_dir = SourceDir::getSourceDir();
+		const std::filesystem::path& source_dir = SourceDir::getSourceDir();
 		std::filesystem::path logo_path;
 		
 		if (std::filesystem::exists(source_dir / "logos" / distro_name)) logo_path = source_dir / "logos" / distro_name;
@@ -64,13 +64,13 @@ struct FetchData
 
 int main(int argc, char* argv[])
 {
-	const std::string esc = "\033";
+	constexpr std::string_view esc = "\033";
 	SourceDir::setSourceDir(argv[0]);
 	FetchData fetch_data;
 	if (argc != 1) fetch_data.distro_name = argv[1];
 	else fetch_data.initDistroName();
 	fetch_data.initDistroLogo();
-	for (std::string line : fetch_data.distro_logo) {
+	for (const std::string& line : fetch_data.distro_logo) {
 		std::cout << esc << line << esc << "[0m" << std::endl;
 	}
 	return 0;
