@@ -3,6 +3,7 @@
 #include <fstream>
 #include <string>
 #include <regex>
+#include <sstream>
 
 
 class SourceDir
@@ -35,7 +36,7 @@ struct FetchData
 	void initDistroName()
 	{
 		if (std::ifstream os_release("/etc/os-release"); os_release) {
-			const std::regex pattern(R"(^ID="?([^"\n]+)\"?)");
+			static const std::regex pattern(R"(^ID="?([^"\n]+)\"?)");
 			for (std::string line; std::getline(os_release, line); ) {
 				if (std::smatch match; std::regex_match(line, match, pattern)) {
 					distro_name = match[1];
@@ -64,10 +65,32 @@ struct FetchData
 
 void render(const FetchData& fetch_data)
 {
-	constexpr std::string_view esc = "\033";
-	for (const std::string& line : fetch_data.distro_logo) {
-		std::cout << esc << line << esc << "[0m" << std::endl;
+	constexpr std::string_view esc = "\033", tab = "    ", reset = "[0m",
+			  border_vertical = "│", border_horizontal = "─", border_right_bottom_corner = "┘";
+	int length = 17;
+	{
+		int index = 0;
+		for (int i = 0; i < fetch_data.distro_logo.size(); i++) {
+			if (fetch_data.distro_logo[i] > fetch_data.distro_logo[index]) index = i;
+		}
+		const size_t pos = fetch_data.distro_logo[index].find('m');
+		const std::string_view content(fetch_data.distro_logo[index].c_str() + pos + 1);
+		length += content.length() - 1;
 	}
+
+	std::stringstream output;
+	for (const std::string& line : fetch_data.distro_logo) {
+		output << tab << tab << esc << line << esc << reset << tab << tab <<
+			esc << "[90m" << border_vertical << esc << reset << "\n";
+	}
+
+	output << esc << "[90m";
+	for (int index = 0; index < length; index++) {
+		output << border_horizontal;
+	}
+	output << border_right_bottom_corner << esc << reset << "\n";
+
+	std::cout << output.str();
 }
 
 
