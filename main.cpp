@@ -65,8 +65,9 @@ struct FetchData
 
 void render(const FetchData& fetch_data)
 {
-	constexpr std::string_view esc = "\033", tab = "    ", reset = "[0m",
-			  border_vertical = "│", border_horizontal = "─", border_right_bottom_corner = "┘";
+	constexpr std::string_view esc = "\033", line_break = "\n", space = " ", tab = "    ", reset = "[0m",
+			  border_color = "[90m", border_vertical = "│", border_horizontal = "─", border_right_bottom_corner = "┘";
+			  
 	int length = 17;
 	{
 		int index = 0;
@@ -79,16 +80,20 @@ void render(const FetchData& fetch_data)
 	}
 
 	std::stringstream output;
+	std::string spacing_buffer;
+	
+	for (int index = 0; index < length; index++) spacing_buffer += space;
+	output << spacing_buffer << esc << border_color << border_vertical << esc << reset << line_break;
+
 	for (const std::string& line : fetch_data.distro_logo) {
 		output << tab << tab << esc << line << esc << reset << tab << tab <<
-			esc << "[90m" << border_vertical << esc << reset << "\n";
+			esc << border_color << border_vertical << esc << reset << line_break;
 	}
 
-	output << esc << "[90m";
-	for (int index = 0; index < length; index++) {
-		output << border_horizontal;
-	}
-	output << border_right_bottom_corner << esc << reset << "\n";
+	output << spacing_buffer << esc << border_color << border_vertical << esc << reset <<
+		line_break << esc << border_color;
+	for (int index = 0; index < length; index++) output << border_horizontal;
+	output << border_right_bottom_corner << esc << reset << line_break;
 
 	std::cout << output.str();
 }
