@@ -4,6 +4,7 @@
 #include <string>
 #include <regex>
 #include <sstream>
+#include <cstdlib>
 
 
 class SourceDir
@@ -32,6 +33,7 @@ struct FetchData
 {
 	std::string distro_name = "linux";
 	std::vector<std::string> distro_logo;
+	std::string username, hostname;
 
 	void initDistroName()
 	{
@@ -46,7 +48,7 @@ struct FetchData
 		}
 	}
 
-	void initDistroLogo()
+	void initDistroData()
 	{
 		const std::filesystem::path& source_dir = SourceDir::getSourceDir();
 		std::filesystem::path logo_path;
@@ -59,6 +61,16 @@ struct FetchData
 				distro_logo.push_back(line);
 			}
 		}
+
+
+		const char* raw_username = std::getenv("USER");
+		const char* raw_logname = std::getenv("LOGNAME");
+		if (raw_username) username = raw_username;
+		else if (raw_logname) username = raw_logname;
+		else username = "root";
+
+		if (std::ifstream hostname_read("/etc/hostname"); hostname_read && std::getline(hostname_read, hostname) && !hostname.empty());
+		else hostname = "localhost";
 	}
 };
 
@@ -83,11 +95,23 @@ void render(const FetchData& fetch_data)
 	std::string spacing_buffer;
 	
 	for (int index = 0; index < length; index++) spacing_buffer += space;
-	output << spacing_buffer << esc << border_color << border_vertical << esc << reset << line_break;
+	output << spacing_buffer << esc << border_color << border_vertical << esc << reset <<
+		space << fetch_data.username << "@" << fetch_data.hostname << line_break;
 
+	int line_index = 0;
 	for (const std::string& line : fetch_data.distro_logo) {
 		output << tab << tab << esc << line << esc << reset << tab << tab <<
-			esc << border_color << border_vertical << esc << reset << line_break;
+			esc << border_color << border_vertical << esc << reset;
+
+		switch (line_index) {
+			case 1:
+				break;
+			default:
+				break;
+		}
+
+		output << line_break;
+		line_index++;
 	}
 
 	output << spacing_buffer << esc << border_color << border_vertical << esc << reset <<
@@ -105,7 +129,7 @@ int main(int argc, char* argv[])
 	FetchData fetch_data;
 	if (argc != 1) fetch_data.distro_name = argv[1];
 	else fetch_data.initDistroName();
-	fetch_data.initDistroLogo();
+	fetch_data.initDistroData();
 	render(fetch_data);
 	return 0;
 }
