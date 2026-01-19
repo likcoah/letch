@@ -38,7 +38,7 @@ struct FetchData
 };
 
 
-namespace initDistroData
+namespace InitDistroData
 {
 	std::string distroName()
 	{
@@ -64,44 +64,15 @@ namespace initDistroData
 	}
 
 
-	FetchData fetchData()
+	FetchData fetchData(const char* distro_name = nullptr)
 	{
 		FetchData fetch_data;
 		const std::filesystem::path& source_dir = SourceDir::getSourceDir();
 
 		{
-			fetch_data.distro_name = distroName();
+			if (distro_name) fetch_data.distro_name = distro_name;
+			else fetch_data.distro_name = distroName();
 		}
-
-		{
-			std::filesystem::path logo_path = source_dir / "logos";
-			if (std::filesystem::exists(logo_path / fetch_data.distro_name)) fetch_data.distro_logo = distroLogo(logo_path / fetch_data.distro_name);
-			else fetch_data.distro_logo = distroLogo(logo_path / "linux");
-		}
-
-		{
-			const char* raw_username = std::getenv("USER");
-			const char* raw_logname = std::getenv("LOGNAME");
-			if (raw_username) fetch_data.username = raw_username;
-			else if (raw_logname) fetch_data.username = raw_logname;
-			else fetch_data.username = "root";
-
-			std::string hostname;
-			if (std::ifstream hostname_read("/etc/hostname");
-					hostname_read && std::getline(hostname_read, hostname) &&
-					!hostname.empty()) fetch_data.hostname = hostname;
-			else fetch_data.hostname = "localhost";
-		}
-
-		return fetch_data;
-	}
-
-
-	FetchData fetchData(const char* distro_name)
-	{
-		FetchData fetch_data;
-		const std::filesystem::path& source_dir = SourceDir::getSourceDir();
-		fetch_data.distro_name = distro_name;
 
 		{
 			std::filesystem::path logo_path = source_dir / "logos";
@@ -181,8 +152,8 @@ int main(int argc, char* argv[])
 	SourceDir::setSourceDir(argv[0]);
 
 	FetchData fetch_data;
-	if (argc != 1) fetch_data = initDistroData::fetchData(argv[1]);
-	else fetch_data = initDistroData::fetchData();
+	if (argc > 1) fetch_data = InitDistroData::fetchData(argv[1]);
+	else fetch_data = InitDistroData::fetchData();
 
 	render(fetch_data);
 	return 0;
