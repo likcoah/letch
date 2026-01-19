@@ -116,9 +116,8 @@ void render(const FetchData& fetch_data)
 	}
 
 	std::stringstream output;
-	std::string spacing_buffer;
+	const std::string spacing_buffer(length, ' ');
 	
-	for (int index = 0; index < length; index++) spacing_buffer += space;
 	output << spacing_buffer << esc << border_color << border_vertical << esc << reset <<
 		space << fetch_data.username << "@" << fetch_data.hostname << line_break;
 
