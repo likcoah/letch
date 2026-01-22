@@ -104,7 +104,8 @@ namespace InitDistroData
 void render(const FetchData& fetch_data)
 {
 	constexpr std::string_view esc = "\033", line_break = "\n", space = " ", tab = "    ", reset = "[0m",
-			  border_color = "[90m", border_vertical = "│", border_horizontal = "─", border_right_bottom_corner = "┘";
+			  border_color = "[90m", border_vertical = "│", border_horizontal = "─", border_right_bottom_corner = "┘",
+			  border_vertical_and_right = "├", border_horizontal_and_up = "┴";
 			  
 	int length = 17;
 	{
@@ -125,9 +126,16 @@ void render(const FetchData& fetch_data)
 
 	int line_index = 0;
 	for (const std::string& line : fetch_data.distro_logo) {
-		output << tab << tab << esc << line << esc << reset << tab << tab <<
-			esc << border_color << border_vertical << esc << reset;
-		output << line_break;
+		output << tab << tab << esc << line << esc << reset << tab << tab;
+
+		if (line_index == 0) {
+			output << esc << border_color << border_vertical_and_right;
+			for (int index = 15; index > 0; index--) output << border_horizontal;
+		} else {
+			output << esc << border_color << border_vertical;
+		}
+
+		output << esc << reset << line_break;
 		line_index++;
 	}
 
