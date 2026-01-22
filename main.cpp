@@ -6,6 +6,7 @@
 #include <sstream>
 #include <cstdlib>
 #include <vector>
+#include <unordered_map>
 
 
 class SourceDir
@@ -34,7 +35,8 @@ struct FetchData
 {
 	std::string distro_name;
 	std::vector<std::string> distro_logo;
-	std::string username, hostname;
+	std::unordered_map<std::string, std::string> system_data;
+	std::vector<std::string> system_data_iterator;
 };
 
 
@@ -83,15 +85,15 @@ namespace InitDistroData
 		{
 			const char* raw_username = std::getenv("USER");
 			const char* raw_logname = std::getenv("LOGNAME");
-			if (raw_username) fetch_data.username = raw_username;
-			else if (raw_logname) fetch_data.username = raw_logname;
-			else fetch_data.username = "root";
+			if (raw_username) fetch_data.system_data["username"] = raw_username;
+			else if (raw_logname) fetch_data.system_data["username"] = raw_logname;
+			else fetch_data.system_data["username"] = "root";
 
 			std::string hostname;
 			if (std::ifstream hostname_read("/etc/hostname");
 					hostname_read && std::getline(hostname_read, hostname) &&
-					!hostname.empty()) fetch_data.hostname = hostname;
-			else fetch_data.hostname = "localhost";
+					!hostname.empty()) fetch_data.system_data["hostname"] = hostname;
+			else fetch_data.system_data["hostname"] = "localhost";
 		}
 
 		return fetch_data;
@@ -119,20 +121,12 @@ void render(const FetchData& fetch_data)
 	const std::string spacing_buffer(length, ' ');
 	
 	output << spacing_buffer << esc << border_color << border_vertical << esc << reset <<
-		space << fetch_data.username << "@" << fetch_data.hostname << line_break;
+		space << fetch_data.system_data.at("username") << "@" << fetch_data.system_data.at("hostname") << line_break;
 
 	int line_index = 0;
 	for (const std::string& line : fetch_data.distro_logo) {
 		output << tab << tab << esc << line << esc << reset << tab << tab <<
 			esc << border_color << border_vertical << esc << reset;
-
-		switch (line_index) {
-			case 1:
-				break;
-			default:
-				break;
-		}
-
 		output << line_break;
 		line_index++;
 	}
