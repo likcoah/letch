@@ -112,7 +112,7 @@ void render(const FetchData& fetch_data)
 	{
 		int index = 0;
 		for (int i = 0; i < fetch_data.distro_logo.size(); i++) {
-			if (fetch_data.distro_logo[i] > fetch_data.distro_logo[index]) index = i;
+			if (fetch_data.distro_logo[i].length() > fetch_data.distro_logo[index].length()) index = i;
 		}
 		const size_t pos = fetch_data.distro_logo[index].find('m');
 		const std::string_view content(fetch_data.distro_logo[index].c_str() + pos + 1);
