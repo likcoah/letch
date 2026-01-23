@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <vector>
 #include <unordered_map>
+#include <optional>
 
 
 class SourceDir
@@ -31,73 +32,73 @@ class SourceDir
 };
 
 
-struct FetchData
+class FetchData
 {
-	std::string distro_name;
-	std::vector<std::string> distro_logo;
-	std::unordered_map<std::string, std::string> system_data;
-	std::vector<std::string> system_data_iterator;
-};
-
-
-namespace InitDistroData
-{
-	std::string distroName()
-	{
-		if (std::ifstream os_release("/etc/os-release"); os_release) {
-			static const std::regex pattern(R"(^ID="?([^"\n]+)\"?)");
-			for (std::string line; std::getline(os_release, line); ) {
-				if (std::smatch match; std::regex_match(line, match, pattern)) return match.str(1);
-			}
-			return "linux";
-		} else return "linux";
-	}
-
-
-	std::vector<std::string> distroLogo(const std::filesystem::path& logo_path)
-	{
+	public:
+		std::string distro_name;
 		std::vector<std::string> distro_logo;
-		if (std::ifstream ascii_logo(logo_path); ascii_logo) {
-			for (std::string line; std::getline(ascii_logo, line); ) {
-				distro_logo.push_back(line);
+		std::unordered_map<std::string, std::string> system_data;
+		std::vector<std::string> system_data_iterator;
+
+		
+		FetchData(const std::optional<std::string_view> argument_distro_name = std::nullopt)
+		{
+			if (argument_distro_name) distro_name = *argument_distro_name;
+			else initDistroName();
+
+			initDistroLogo();
+			initUsername();
+			initHostname();
+		}
+	
+	private:
+		void initDistroName()
+		{
+			if (std::ifstream os_release("/etc/os-release"); os_release) {
+				static const std::regex pattern(R"(^ID="?([^"\n]+)\"?)");
+				for (std::string line; std::getline(os_release, line); ) {
+					if (std::smatch match; std::regex_match(line, match, pattern)) {
+						distro_name = match.str(1);
+						return;
+					}
+				}
+				distro_name = "linux";
+			} else distro_name = "linux";
+		}
+
+
+		void initDistroLogo()
+		{
+			std::vector<std::string> result;
+			const std::filesystem::path& logos_path = SourceDir::getSourceDir() / "logos";
+
+			if (std::ifstream logo(logos_path / distro_name); logo) {
+				for (std::string line; std::getline(logo, line); ) result.push_back(line);
+			} else if (std::ifstream logo(logos_path / "linux"); logo) {
+				for (std::string line; std::getline(logo, line); ) result.push_back(line);
 			}
-		}
-		return distro_logo;
-	}
-
-
-	FetchData fetchData(const char* distro_name = nullptr)
-	{
-		FetchData fetch_data;
-		const std::filesystem::path& source_dir = SourceDir::getSourceDir();
-
-		{
-			if (distro_name) fetch_data.distro_name = distro_name;
-			else fetch_data.distro_name = distroName();
+			distro_logo = result;
 		}
 
-		{
-			std::filesystem::path logo_path = source_dir / "logos";
-			if (std::filesystem::exists(logo_path / fetch_data.distro_name)) fetch_data.distro_logo = distroLogo(logo_path / fetch_data.distro_name);
-			else fetch_data.distro_logo = distroLogo(logo_path / "linux");
-		}
 
+		void initUsername()
 		{
 			const char* raw_username = std::getenv("USER");
 			const char* raw_logname = std::getenv("LOGNAME");
-			if (raw_username) fetch_data.system_data["username"] = raw_username;
-			else if (raw_logname) fetch_data.system_data["username"] = raw_logname;
-			else fetch_data.system_data["username"] = "root";
+			if (raw_username) system_data["username"] = raw_username;
+			else if (raw_logname) system_data["username"] = raw_logname;
+			else system_data["username"] = "root";
+		}
 
+
+		void initHostname()
+		{
 			std::string hostname;
 			if (std::ifstream hostname_read("/etc/hostname");
 					hostname_read && std::getline(hostname_read, hostname) &&
-					!hostname.empty()) fetch_data.system_data["hostname"] = hostname;
-			else fetch_data.system_data["hostname"] = "localhost";
+					!hostname.empty()) system_data["hostname"] = hostname;
+			else system_data["hostname"] = "localhost";
 		}
-
-		return fetch_data;
-	}
 };
 
 
@@ -152,9 +153,9 @@ int main(int argc, char* argv[])
 {
 	SourceDir::setSourceDir(argv[0]);
 
-	FetchData fetch_data;
-	if (argc > 1) fetch_data = InitDistroData::fetchData(argv[1]);
-	else fetch_data = InitDistroData::fetchData();
+	std::optional<std::string_view> arg;
+	if (argc > 1) arg = argv[1];
+	FetchData fetch_data(arg);
 
 	render(fetch_data);
 	return 0;
