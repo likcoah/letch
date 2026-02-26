@@ -108,15 +108,28 @@ void render(const FetchData& fetch_data)
 			  border_color = "[90m", border_vertical = "│", border_horizontal = "─", border_right_bottom_corner = "┘",
 			  border_vertical_and_right = "├", border_horizontal_and_up = "┴";
 			  
-	int length = 17;
+	int length = 16;
 	{
-		int index = 0;
-		for (int i = 0; i < fetch_data.distro_logo.size(); i++) {
-			if (fetch_data.distro_logo[i].length() > fetch_data.distro_logo[index].length()) index = i;
+		int max_line_length = 0;
+		for (const std::string& line : fetch_data.distro_logo) {
+			int line_length = 0;
+			bool is_ansi = false;
+
+			for (unsigned char symbol : line) {
+			    if (symbol == '[') { is_ansi = true; continue; }
+			    if (is_ansi) {
+			        if (symbol == 'm') { is_ansi = false; }
+					continue;
+			    }
+			    if ((symbol & 0xc0) != 0x80) {
+			        line_length++;
+			    }
+			}
+
+			if (line_length > max_line_length) max_line_length = line_length;
 		}
-		const size_t pos = fetch_data.distro_logo[index].find('m');
-		const std::string_view content(fetch_data.distro_logo[index].c_str() + pos + 1);
-		length += content.length() - 1;
+
+		length += max_line_length;
 	}
 
 	std::stringstream output;
