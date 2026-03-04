@@ -105,10 +105,10 @@ class FetchData
 void render(const FetchData& fetch_data)
 {
 	constexpr std::string_view esc = "\033", line_break = "\n", space = " ", tab = "    ", reset = "[0m",
-			  border_color = "[90m", border_vertical = "│", border_horizontal = "─", border_right_bottom_corner = "┘",
+			  border_color = "[90m", border_vertical = "│", border_horizontal = "─", border_right_bottom_corner = "╯",
 			  border_vertical_and_right = "├", border_horizontal_and_up = "┴";
 			  
-	int length = 16;
+	int length = 16; // two "tab" on both sides of logo
 	{
 		int max_line_length = 0;
 		for (const std::string& line : fetch_data.distro_logo) {
@@ -153,8 +153,9 @@ void render(const FetchData& fetch_data)
 		line_index++;
 	}
 
-	output << spacing_buffer << esc << border_color << border_vertical << esc << reset <<
-		line_break << esc << border_color;
+	output << spacing_buffer << esc << border_color << border_vertical << esc << reset << line_break;
+
+	output << esc << border_color;
 	for (int index = 0; index < length; index++) output << border_horizontal;
 	output << border_right_bottom_corner << esc << reset << line_break;
 
